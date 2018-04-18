@@ -5,6 +5,7 @@ from secrets import *
 import sqlite3
 
 DB_NAME = 'articles.db'
+SUBJECT_LIST = ['Chemistry', 'Immunology', 'Nutrition', 'Engineering', 'Statistics', 'Psychology', 'Environment', 'Education', 'Law', 'History']
 
 ### Caching ###
 # open cache file / dictionary, or create new one
@@ -34,8 +35,8 @@ def get_springer_data(search_subject):
 	baseurl = 'http://api.springer.com/meta/v1/json?'
 	params = {}
 	params['api_key'] = springer_key # api key is required; imported from secrets.py
-	params['q'] = ['subject:' + search_subject, 'country:"United States"', 'type:Journal'] # defines the query to be performed - many options, case sensitive
-	params['p'] = 100
+	params['q'] = ['keyword:' + search_subject, 'country:"United States"', 'type:Journal'] # defines the query to be performed - many options, case sensitive
+	params['p'] = 50
 
 	unique_ident = params_unique_combination(baseurl, params)
 	#print(unique_ident)
@@ -58,7 +59,7 @@ def get_springer_data(search_subject):
 # may be able to get subject terms for database from the restatement of the query that's returned in the results
 
 
-# x = get_springer_data('Mathematics')
+# x = get_springer_data('Geography')
 # print(x)
 
 # function to make a request to the PLOS Search API, and cache data
@@ -68,8 +69,8 @@ def get_plos_data(search_subject):
 	baseurl = 'http://api.plos.org/search'
 	params = {}
 	params['api_key'] = plos_key # api key is required; imported from secrets.py
-	params['q'] ='subject:' + search_subject
-	params['rows'] = 100
+	params['q'] ='abstract:' + search_subject
+	params['rows'] = 50
 	params['wt'] = 'json'
 
 	unique_ident = params_unique_combination(baseurl, params)
@@ -88,7 +89,7 @@ def get_plos_data(search_subject):
 		return CACHE_DICTION[unique_ident]
 
 
-# x = get_plos_data('Mathematics')
+# x = get_plos_data('Ontologies')
 # print(x)
 
 
@@ -128,7 +129,7 @@ def get_impact_data(doi):
 # function to process (cached) API data
 # input: a subject to search (str)
 # return: a dictionary that has only the relevant values for each article, including impact metrics (key=doi, value=relevant data)
-def process_data(search_subject):
+def process_api_data(search_subject):
 	article_dict = {}
 
 	springer = get_springer_data(search_subject)
@@ -179,10 +180,19 @@ def process_data(search_subject):
 	return article_dict
 
 
-article_dict = process_data('Mathematics')
-articles2 = process_data('Chemistry')
-article_dict.update(articles2)
+# article_dict = process_api_data('Mathematics')
+# articles2 = process_api_data('Chemistry')
+# article_dict.update(articles2)
 #print(articles)
+
+# z = process_api_data('Sociology')
+# for each in z.keys():
+# 	print(z[each]['metrics'])
+
+ARTICLE_DICT = {}
+for subject in SUBJECT_LIST:
+	articles = process_api_data(subject)
+	ARTICLE_DICT.update(articles)
 
 
 ### Store API data in database ###
@@ -202,6 +212,7 @@ def create_db(dbname):
 
 	drop_tables = """ DROP TABLE IF EXISTS 'AccessLevels';            
 					DROP TABLE IF EXISTS 'Articles';
+					DROP TABLE IF EXISTS 'Subjects';
 					"""
 
 	create_tables = """CREATE TABLE 'AccessLevels' (
@@ -221,7 +232,11 @@ def create_db(dbname):
 								'AccessLevelId' INTEGER,
 								'CitationCount' TEXT,
 								'InfluentialCitations' TEXT
-								)
+								);
+
+						CREATE TABLE 'Subjects' (
+							'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
+							'Subject' TEXT)
 							"""
 
 	# call execute statements to create new tables
@@ -238,7 +253,8 @@ create_db(DB_NAME)
 
 # function to populate the database
 # input: database name
-# return:
+# return: nothing
+# populates all three tables in database (AccessLevels, Subjects, Articles)
 def populate_db(dbname):
 	try:
 		conn = sqlite3.connect(dbname)
@@ -254,19 +270,28 @@ def populate_db(dbname):
 				"""
 	cur.execute(statement)
 
-	for doi in article_dict.keys():
-		if article_dict[doi]['open_access'] == 'false':
-			statement = 'SELECT Id FROM AccessLevels WHERE AccessLevel = "Subscription Required"'
-			access_id = cur.execute(statement).fetchone()[0]
+	for subject in SUBJECT_LIST:
+		statement = """INSERT INTO Subjects ('Subject')
+						VALUES ('{}');
+					""".format(subject)
+		cur.execute(statement)
+
+	for doi in ARTICLE_DICT.keys():
+		if ARTICLE_DICT[doi]['open_access'] == 'false':
+			access_id_statement = 'SELECT Id FROM AccessLevels WHERE AccessLevel = "Subscription Required"'
+			access_id = cur.execute(access_id_statement).fetchone()[0]
 		else:
-			statement = 'SELECT Id FROM AccessLevels WHERE AccessLevel = "Open Access"'
-			access_id = cur.execute(statement).fetchone()[0]
+			access_id_statement = 'SELECT Id FROM AccessLevels WHERE AccessLevel = "Open Access"'
+			access_id = cur.execute(access_id_statement).fetchone()[0]
+		
+		subject_statement = 'SELECT Id FROM Subjects WHERE Subject = "{}"'.format(ARTICLE_DICT[doi]['subject'])
+		subject = cur.execute(subject_statement).fetchone()[0]
+		
 		statement = """INSERT INTO Articles 
 						VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 					"""
-		values = (None, doi, article_dict[doi]['title'], article_dict[doi]['author'], article_dict[doi]['date'], article_dict[doi]['journal'], 
-					article_dict[doi]['subject'], article_dict[doi]['publisher'], access_id, article_dict[doi]['metrics']['citations'], 
-					article_dict[doi]['metrics']['influential'])
+		values = (None, doi, ARTICLE_DICT[doi]['title'], ARTICLE_DICT[doi]['author'], ARTICLE_DICT[doi]['date'], ARTICLE_DICT[doi]['journal'], 
+				  subject, ARTICLE_DICT[doi]['publisher'], access_id, ARTICLE_DICT[doi]['metrics']['citations'], ARTICLE_DICT[doi]['metrics']['influential'])
 		cur.execute(statement, values)
 
 	conn.commit()
@@ -283,13 +308,16 @@ populate_db(DB_NAME)
 # may also need functions to process data - create dictionaries for each data presentation option from the database, to draw from for plotly
 
 
-### Make it interactive ###
+### Invoke functions to gather data from APIs and populate database ###
+# print('Gathering journal article citation data...')
 
+# print('Populating database articles.db...')
+
+
+### Make it interactive ###
 # input:
 # return:
 # what this function does:
-# - get user input to decide which subjects to search (provide suggestions)
-# - create a database
 # - let user choose data presentation options
 def interactive_commands():
 	pass
