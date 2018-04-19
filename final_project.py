@@ -615,15 +615,22 @@ def plot_citations_by_year(year_citation_list):
 ### Make it interactive ###
 
 if __name__=="__main__":
-# input: nothing
-# return: nothing
-# what this function does: lets user choose data presentation options
+	
+	def load_help_text():
+	    with open('help.txt') as help:
+	        return help.read()
+
+	# what this function does: lets user choose data presentation options
+	# input: nothing
+	# return: nothing
 	def choose_display_options():
+		help = load_help_text()
+
 		while True:
 			user_input = input("Welcome! Enter a graph option, or enter 'help' for a list of possible data groupings: ")
 
 			if user_input == 'help':
-				print('help text')
+				print(help)
 				continue
 
 			elif user_input == 'exit':

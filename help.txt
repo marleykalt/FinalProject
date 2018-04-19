@@ -1,0 +1,15 @@
+This program fetches article citation metrics across 10 subjects. Here are commands you can enter to see that data:
+
+(enter all commands in lowercase, with no quotation marks or extra spaces)
+
+‘access’: Shows the average number of citations for articles, based on whether they are open access or subscription-based.
+
+‘influence’: Shows the average number of influential citations for articles, based on whether they are open access or subscription-based.
+
+‘subject’: Shows the average number of citations for articles from each of the 10 subjects.
+
+‘year’: Shows the average number of citations for articles from different publication years.
+
+‘help’: Brings you here! Allows you to understand all data presentation options.
+
+‘exit’: Exits the program.
