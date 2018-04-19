@@ -40,7 +40,7 @@ def get_springer_data(search_subject):
 	baseurl = 'http://api.springer.com/meta/v1/json?'
 	params = {}
 	params['api_key'] = springer_key # api key is required; imported from secrets.py
-	params['q'] = ['keyword:' + search_subject, 'country:"United States"', 'type:Journal'] # defines the query to be performed - many options, case sensitive
+	params['q'] = ['keyword:' + search_subject, 'country:"United States"', 'type:Journal'] # defines the query to be performed
 	params['p'] = 50
 
 	unique_ident = params_unique_combination(baseurl, params)
@@ -57,11 +57,6 @@ def get_springer_data(search_subject):
 		fw.write(dumped_json_cache)
 		fw.close()
 		return CACHE_DICTION[unique_ident]
-
-# return value has a 'records displayed' field that could be good for determining if the result is okay
-# may only be able to use one-word subject terms (worked: Mathematics, Chemistry, Psychology, Education)
-# has an openaccess parameter that is true / false
-# may be able to get subject terms for database from the restatement of the query that's returned in the results
 
 
 # x = get_springer_data('Geography')
@@ -221,11 +216,6 @@ def process_api_data(search_subject):
 # for each in z.keys():
 # 	print(z[each]['metrics'])
 
-# this is important to create the database
-# for subject in SUBJECT_LIST:
-# 	articles = process_api_data(subject)
-# 	ARTICLE_DICT.update(articles)
-
 
 ### Store API data in database ###
 
@@ -277,9 +267,7 @@ def create_db(dbname):
 
 	conn.commit()
 	conn.close()
-	print('created database')
-
-#create_db(DB_NAME)
+	#print('created database')
 
 
 
@@ -328,10 +316,7 @@ def populate_db(dbname):
 
 	conn.commit()
 	conn.close()
-	print('populated database')
-
-
-#populate_db(DB_NAME)
+	#print('populated database')
 
 
 ### Process Data ###
@@ -607,24 +592,64 @@ def plot_citations_by_year(year_citation_list):
 
 
 
-q = get_citations_by_year(DB_NAME)
-plot_citations_by_year(q)
+# q = get_citations_by_year(DB_NAME)
+# plot_citations_by_year(q)
+
 
 ### Invoke functions to gather data from APIs and populate database ###
+
+# uncomment these lines to fetch new data and rebuild the database
 # print('Gathering journal article citation data...')
+# for subject in SUBJECT_LIST:
+# 	articles = process_api_data(subject)
+# 	ARTICLE_DICT.update(articles)
+
+# print('Creating database articles.db...')
+# create_db(DB_NAME)
 
 # print('Populating database articles.db...')
+# populate_db(DB_NAME)
+
 
 
 ### Make it interactive ###
+
+if __name__=="__main__":
 # input: nothing
-# return: will open plotly graphs
-# what this function does:
-# - let user choose data presentation options
-def interactive_commands():
-	pass
-	# have a detailed help list
-	# also have a .txt file of a subject list, to load in like the help file in project 3, to show possible 1-word subjects
+# return: nothing
+# what this function does: lets user choose data presentation options
+	def choose_display_options():
+		while True:
+			user_input = input("Welcome! Enter a graph option, or enter 'help' for a list of possible data groupings: ")
+
+			if user_input == 'help':
+				print('help text')
+				continue
+
+			elif user_input == 'exit':
+				print('Goodbye!')
+				return
+
+			elif user_input == 'access':
+				data = get_citations_by_access(DB_NAME)
+				plot_access_citations(data)
+
+			elif user_input == 'influence':
+				data = get_influence_by_access(DB_NAME)
+				plot_influential_citations(data)
+
+			elif user_input == 'subject':
+				data = create_subject_insts(DB_NAME)
+				plot_citations_by_subject(data)
+
+			elif user_input == 'year':
+				data = get_citations_by_year(DB_NAME)
+				plot_citations_by_year(data)
+
+			else:
+				print("I'm sorry, I don't recognize that command. Please try another, or enter 'help' for options. ")
+
+	choose_display_options()
 
 
 
