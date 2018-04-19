@@ -3,6 +3,7 @@ import requests
 import json
 from secrets import *
 import sqlite3
+import random
 import plotly.plotly as py
 import plotly.graph_objs as go
 
@@ -149,7 +150,8 @@ class Article():
 		self.influential = influential_count
 
 	def __str__(self):
-		return "{} ({}), {}: {} citation(s), {} influential citation(s)".format(self.subject, self.year, self.access, self.citations, self.influential)
+		return "Subject: {} ({}), Access: {} - {} citation(s), {} influential citation(s)".format(self.subject, self.year, self.access, 
+																								self.citations, self.influential)
 
 
 ### Process API Data ###
@@ -652,6 +654,12 @@ if __name__=="__main__":
 			elif user_input == 'year':
 				data = get_citations_by_year(DB_NAME)
 				plot_citations_by_year(data)
+
+			elif user_input == 'list':
+				article_insts = create_article_insts(DB_NAME)
+				random_articles = random.choices(article_insts, k=25)
+				for each in random_articles:
+					print(each)
 
 			else:
 				print("I'm sorry, I don't recognize that command. Please try another, or enter 'help' for options. ")

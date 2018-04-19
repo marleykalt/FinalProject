@@ -1,3 +1,4 @@
+
 This program fetches article citation metrics across 10 subjects. Here are commands you can enter to see that data:
 
 (enter all commands in lowercase, with no quotation marks or extra spaces)
@@ -9,6 +10,8 @@ This program fetches article citation metrics across 10 subjects. Here are comma
 ‘subject’: Shows the average number of citations for articles from each of the 10 subjects.
 
 ‘year’: Shows the average number of citations for articles from different publication years.
+
+‘list’: Prints a list of 25 random articles from the database.
 
 ‘help’: Brings you here! Allows you to understand all data presentation options.
 
