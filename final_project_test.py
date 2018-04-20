@@ -96,7 +96,7 @@ class TestDataProcessing(unittest.TestCase):
 		self.assertEqual(type(arti[0].citations), int)
 
 
-# test that plotly opens
+# Test to show that Plotly opens correctly
 class TestGraphs(unittest.TestCase):
 
 	def test_plotly_functions(self):

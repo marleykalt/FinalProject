@@ -1,9 +1,10 @@
-# import statements - need to be pip installed in virtual env
+# import statements
 import requests
 import json
 from secrets import *
 import sqlite3
 import random
+import sys
 import plotly.plotly as py
 import plotly.graph_objs as go
 
@@ -14,8 +15,7 @@ DB_NAME = 'articles.db'
 SUBJECT_LIST = ['Chemistry', 'Immunology', 'Nutrition', 'Engineering', 'Statistics', 'Psychology', 'Environment', 'Education', 'Law', 'History']
 ARTICLE_DICT = {}
 
-### Caching ###
-# open cache file / dictionary, or create new one
+### Caching Setup ###
 try:
     cache_file = open(CACHE_FNAME, 'r')
     cache_contents = cache_file.read()
@@ -32,20 +32,20 @@ def params_unique_combination(baseurl, params):
         res.append("{}-{}".format(k, params[k]))
     return baseurl + "_".join(res)
 
+
 ### Request data from APIs ###
 
-# function to make a request to the Springer Meta API, and cache data
+# function to make a request to the Springer Meta API
 # input: a subject term to search
-# return: a list of DOIs for articles retrieved from Springer, or a processed dictionary, or just cache dictionary
+# return: python dictionary, from cache
 def get_springer_data(search_subject):
 	baseurl = 'http://api.springer.com/meta/v1/json?'
 	params = {}
-	params['api_key'] = springer_key # api key is required; imported from secrets.py
+	params['api_key'] = springer_key # api key is required; variable imported from secrets.py
 	params['q'] = ['keyword:' + search_subject, 'country:"United States"', 'type:Journal'] # defines the query to be performed
 	params['p'] = 50
 
 	unique_ident = params_unique_combination(baseurl, params)
-	#print(unique_ident)
 
 	if unique_ident in CACHE_DICTION:
 		return CACHE_DICTION[unique_ident]
@@ -60,22 +60,18 @@ def get_springer_data(search_subject):
 		return CACHE_DICTION[unique_ident]
 
 
-# x = get_springer_data('Education')
-# print(x)
-
-# function to make a request to the PLOS Search API, and cache data
+# function to make a request to the PLOS Search API
 # input: a subject term to search
-# return: a list of DOIs articles retrieved from PLOS, or a processed dictionary, or just cache dictionary
+# return: python dictionary, from cache
 def get_plos_data(search_subject):
 	baseurl = 'http://api.plos.org/search'
 	params = {}
-	params['api_key'] = plos_key # api key is required; imported from secrets.py
+	params['api_key'] = plos_key # api key is required; variable imported from secrets.py
 	params['q'] ='abstract:' + search_subject
 	params['rows'] = 50
 	params['wt'] = 'json'
 
 	unique_ident = params_unique_combination(baseurl, params)
-	#print(unique_ident)
 
 	if unique_ident in CACHE_DICTION:
 		return CACHE_DICTION[unique_ident]
@@ -90,13 +86,9 @@ def get_plos_data(search_subject):
 		return CACHE_DICTION[unique_ident]
 
 
-# x = get_plos_data('Chemistry')
-# print(x)
-
-
-# function to make a request to the Semantic Scholar API, and cache data
+# function to make a request to the Semantic Scholar API
 # input: a doi from a specific article
-# return: python dictionary with article-level metrics for that doi
+# return: python dictionary with article-level metrics for that doi, from cache
 def get_impact_data(doi):
 	baseurl = 'https://api.semanticscholar.org/v1/paper/' + doi
 	params = {}
@@ -117,21 +109,10 @@ def get_impact_data(doi):
 		return CACHE_DICTION[unique_ident]
 
 
-# doi_list = []
-# for each in x['records']:
-# 	doi = each['doi']
-# 	doi_list.append(doi)
-
-# for each in doi_list:
-# 	y = get_impact_data(each)
-# 	print(y)
-
-
 ### Set up Article and Subject classes ###
 # these classes will take queried data from the articles database
 # will prepare data for visualization
 
-# subject contains the average citation count and influential citation count, grouped by subject
 class Subject():
 	def __init__(self, subject, citation_count, influential_count):
 		self.subject = subject
@@ -141,7 +122,6 @@ class Subject():
 	def __str__(self):
 		return "{}: {} citation(s) (average), {} influential citation(s) (average)".format(self.subject, self.avg_citations, self.avg_influential)
 
-# article contains data about one individual article
 class Article():
 	def __init__(self, subject, year, access_level, citation_count, influential_count):
 		self.subject = subject
@@ -156,9 +136,10 @@ class Article():
 
 
 ### Process API Data ###
-# function to process (cached) API data
-# input: a subject to search (str)
-# return: a dictionary that has only the relevant values for each article, including impact metrics (key=doi, value=relevant data)
+
+# function to fetch and process API data
+# input: a subject to search
+# return: a dictionary that has only the relevant values (for data viz) for each article, including impact metrics (key=doi:value=relevant data)
 def process_api_data(search_subject):
 	article_dict = {}
 
@@ -173,7 +154,8 @@ def process_api_data(search_subject):
 		publisher = article['publisher']
 		open_access = article['openaccess']
 		# add to dictionary
-		article_dict[doi] = {'title':title, 'author':author, 'date':date, 'journal':journal, 'subject':subject, 'publisher':publisher, 'open_access':open_access}
+		article_dict[doi] = {'title':title, 'author':author, 'date':date, 'journal':journal, 'subject':subject, 'publisher':publisher, 
+							'open_access':open_access}
 		
 
 	plos = get_plos_data(search_subject)
@@ -193,7 +175,8 @@ def process_api_data(search_subject):
 		subject = search_subject
 		publisher = "PLOS"
 		open_access = 'true' 
-		article_dict[doi] = {'title':title, 'author':author, 'date':date, 'journal':journal, 'subject':subject, 'publisher':publisher, 'open_access':open_access}
+		article_dict[doi] = {'title':title, 'author':author, 'date':date, 'journal':journal, 'subject':subject, 'publisher':publisher, 
+							'open_access':open_access}
 
 
 	for doi in article_dict.keys():
@@ -210,21 +193,9 @@ def process_api_data(search_subject):
 	return article_dict
 
 
-# article_dict = process_api_data('Mathematics')
-# articles2 = process_api_data('Chemistry')
-# article_dict.update(articles2)
-#print(articles)
-
-# z = process_api_data('Sociology')
-# for each in z.keys():
-# 	print(z[each]['metrics'])
-
-
 ### Store API data in database ###
 
-# DB setup: takes data from the cache dictionary
-
-# function to create a new database - will have two empty tables
+# function to create a new database
 # input: database name
 # return: nothing
 def create_db(dbname):
@@ -270,14 +241,11 @@ def create_db(dbname):
 
 	conn.commit()
 	conn.close()
-	#print('created database')
 
 
-
-# function to populate the database
+# function to populate all three tables in database (AccessLevels, Subjects, Articles)
 # input: database name
 # return: nothing
-# populates all three tables in database (AccessLevels, Subjects, Articles)
 def populate_db(dbname):
 	try:
 		conn = sqlite3.connect(dbname)
@@ -319,13 +287,12 @@ def populate_db(dbname):
 
 	conn.commit()
 	conn.close()
-	#print('populated database')
 
 
 ### Process Data ###
 ### Functions to create class instances or query the database, to use when creating charts to present data ###
 
-# queries the database to get average citations, grouped by access level
+# function to query the database to get average citations, grouped by access level
 # input: database name
 # return: list of two tuples: [(access_level, avg_citations), (access_level, avg_citations)]
 def get_citations_by_access(dbname):
@@ -343,7 +310,7 @@ def get_citations_by_access(dbname):
 	conn.close()
 	return results
 
-# queries the database to get average number of influential citations, grouped by access level
+# function to query the database to get average number of influential citations, grouped by access level
 # input: database name
 # return: list of two tuples
 def get_influence_by_access(dbname):
@@ -361,9 +328,9 @@ def get_influence_by_access(dbname):
 	conn.close()
 	return results
 
-
+# function to query the database and create instances of the Subject class
 # input: name of database
-# return: a list of Subject classes
+# return: a list of Subject class instances
 def create_subject_insts(dbname):
 	avg_cite_by_sub = []
 
@@ -389,12 +356,8 @@ def create_subject_insts(dbname):
 	conn.close()
 	return avg_cite_by_sub
 
-# r = create_subject_insts(DB_NAME)
-# for each in r:
-# 	print(each)
 
-
-# queries the database to get average number of citations, grouped by publication date
+# function to query the database to get average number of citations, grouped by publication date
 # input: database name
 # return: list of tuples
 def get_citations_by_year(dbname):
@@ -411,8 +374,9 @@ def get_citations_by_year(dbname):
 	return results
 
 
+# function to query the database and create instances of the Article class
 # input: name of database
-# return: a list of Article classes
+# return: a list of Article class instances
 def create_article_insts(dbname):
 	article_obs = []
 
@@ -436,11 +400,6 @@ def create_article_insts(dbname):
 	conn.commit()
 	conn.close()
 	return article_obs
-
-
-# a = create_article_insts(DB_NAME)
-# for each in a[:20]:
-# 	print(each)
 
 
 ### Present data ###
@@ -472,10 +431,6 @@ def plot_access_citations(access_citation_list):
 	py.plot(fig, filename='citations-by-access')
 
 
-# x = get_citations_by_access(DB_NAME)
-# plot_access_citations(x)
-
-
 # Function 2: plots the average number of influential  citations for articles based on access level
 # input: list of two tuples - each tuple has access level and average influential citation count
 # return: nothing, but opens a graph in plotly in a web browser
@@ -501,9 +456,6 @@ def plot_influential_citations(access_influence_list):
 
 	fig = go.Figure(data=data, layout=layout)
 	py.plot(fig, filename='influence-by-access')
-
-# y = get_influence_by_access(DB_NAME)
-# plot_influential_citations(y)
 
 
 # Function 3: plots average citation count for articles, grouped by subject
@@ -554,10 +506,6 @@ def plot_citations_by_subject(subject_inst_list):
 	py.plot(fig, filename='citations-by-subject')
 
 
-# z = create_subject_insts(DB_NAME)
-# plot_citations_by_subject(z)
-
-
 # Function 4: plots average citation counts for articles, grouped by year
 # input: list of tuples
 # return: nothing, but opens a graph in plotly in a web browser
@@ -595,34 +543,34 @@ def plot_citations_by_year(year_citation_list):
 
 
 
-# q = get_citations_by_year(DB_NAME)
-# plot_citations_by_year(q)
-
+if __name__=="__main__":
 
 ### Invoke functions to gather data from APIs and populate database ###
 
-# uncomment these lines to fetch new data and rebuild the database
-# print('Gathering journal article citation data...')
-# for subject in SUBJECT_LIST:
-# 	articles = process_api_data(subject)
-# 	ARTICLE_DICT.update(articles)
+	if len(sys.argv) > 1 and sys.argv[1] == '--rebuild':
+		print('Gathering journal article citation data...')
+		for subject in SUBJECT_LIST:
+			articles = process_api_data(subject)
+			ARTICLE_DICT.update(articles)
 
-# print('Creating database articles.db...')
-# create_db(DB_NAME)
+		print('Creating database articles.db...')
+		create_db(DB_NAME)
 
-# print('Populating database articles.db...')
-# populate_db(DB_NAME)
+		print('Populating database articles.db...')
+		populate_db(DB_NAME)
+
+	else:
+		print('Using existing database.')
 
 
 ### Make it interactive ###
-
-if __name__=="__main__":
 	
 	def load_help_text():
 	    with open('help.txt') as help:
 	        return help.read()
 
-	# what this function does: lets user choose data presentation options
+	
+	# function to let user choose data presentation options
 	# input: nothing
 	# return: nothing
 	def choose_display_options():
@@ -660,11 +608,12 @@ if __name__=="__main__":
 				random_articles = random.choices(article_insts, k=25)
 				for each in random_articles:
 					print(each)
+				print('\n')
 
 			else:
 				print("I'm sorry, I don't recognize that command. Please try another, or enter 'help' for options.")
 
-	#choose_display_options()
+	choose_display_options()
 
 
 

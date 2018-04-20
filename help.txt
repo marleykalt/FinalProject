@@ -1,6 +1,5 @@
 
 This program fetches article citation metrics across 10 subjects. Here are commands you can enter to see that data:
-
 (enter all commands in lowercase, with no quotation marks or extra spaces)
 
 ‘access’: Shows the average number of citations for articles, based on whether they are open access or subscription-based.
