@@ -60,7 +60,7 @@ def get_springer_data(search_subject):
 		return CACHE_DICTION[unique_ident]
 
 
-# x = get_springer_data('Geography')
+# x = get_springer_data('Education')
 # print(x)
 
 # function to make a request to the PLOS Search API, and cache data
@@ -90,7 +90,7 @@ def get_plos_data(search_subject):
 		return CACHE_DICTION[unique_ident]
 
 
-# x = get_plos_data('Ontologies')
+# x = get_plos_data('Chemistry')
 # print(x)
 
 
@@ -125,6 +125,7 @@ def get_impact_data(doi):
 # for each in doi_list:
 # 	y = get_impact_data(each)
 # 	print(y)
+
 
 ### Set up Article and Subject classes ###
 # these classes will take queried data from the articles database
@@ -251,11 +252,11 @@ def create_db(dbname):
 								'Author' TEXT,
 								'PubDate' TEXT,
 								'Journal' TEXT,
-								'SubjectId' TEXT,
+								'SubjectId' INTEGER,
 								'Publisher' TEXT,
 								'AccessLevelId' INTEGER,
-								'CitationCount' TEXT,
-								'InfluentialCitations' TEXT
+								'CitationCount' BLOB,
+								'InfluentialCitations' BLOB
 								);
 
 						CREATE TABLE 'Subjects' (
@@ -452,7 +453,7 @@ def plot_access_citations(access_citation_list):
 	trace0 = go.Bar(
     x=[access_citation_list[0][0], access_citation_list[1][0]],
     y=[access_citation_list[0][1], access_citation_list[1][1]],
-    text=[str('%.1f'%access_citation_list[0][1]) + " citations on average", str('%.1f'%access_citation_list[1][1]) + " citations on average" ],
+    text=['%.1f'%access_citation_list[0][1] + " citations on average", '%.1f'%access_citation_list[1][1] + " citations on average"],
     marker=dict(
         color='rgb(17,70,155)',
         line=dict(
@@ -482,8 +483,8 @@ def plot_influential_citations(access_influence_list):
 	trace0 = go.Bar(
     x=[access_influence_list[0][0], access_influence_list[1][0]],
     y=[access_influence_list[0][1], access_influence_list[1][1]],
-    text=[str('%.1f'%access_influence_list[0][1]) + " influential citations on average", 
-    	  str('%.1f'%access_influence_list[1][1]) + " influential citations on average" ],
+    text=['%.1f'%access_influence_list[0][1] + " influential citations on average", 
+    	  '%.1f'%access_influence_list[1][1] + " influential citations on average" ],
     marker=dict(
         color='rgb(17,70,155)',
         line=dict(
@@ -524,10 +525,10 @@ def plot_citations_by_subject(subject_inst_list):
     x=[sub1[0].subject, sub1[1].subject, sub1[2].subject, sub1[3].subject, sub1[4].subject, sub1[5].subject, sub1[6].subject], 
     y=[sub1[0].avg_citations, sub1[1].avg_citations, sub1[2].avg_citations, sub1[3].avg_citations, sub1[4].avg_citations, 
     	sub1[5].avg_citations, sub1[6].avg_citations],
-    text=[str('%.1f'%sub1[0].avg_citations) + " citations on average", str('%.1f'%sub1[1].avg_citations) + " citations on average", 
-    	str('%.1f'%sub1[2].avg_citations) + " citations on average", str('%.1f'%sub1[3].avg_citations) + " citations on average", 
-    	str('%.1f'%sub1[4].avg_citations) + " citations on average", str('%.1f'%sub1[5].avg_citations) + " citations on average", 
-    	str('%.1f'%sub1[6].avg_citations) + " citations on average",],
+    text=['%.1f'%sub1[0].avg_citations + " citations on average", '%.1f'%sub1[1].avg_citations + " citations on average", 
+    	'%.1f'%sub1[2].avg_citations + " citations on average", '%.1f'%sub1[3].avg_citations + " citations on average", 
+    	'%.1f'%sub1[4].avg_citations + " citations on average", '%.1f'%sub1[5].avg_citations + " citations on average", 
+    	'%.1f'%sub1[6].avg_citations + " citations on average",],
     name='Science/Mathematics',
     marker=dict(
         color='rgb(17,70,155)'
@@ -536,8 +537,8 @@ def plot_citations_by_subject(subject_inst_list):
 	trace2 = go.Bar(
     x=[sub2[0].subject, sub2[1].subject, sub2[2].subject],
     y=[sub2[0].avg_citations, sub2[1].avg_citations, sub2[2].avg_citations],
-    text=[str('%.1f'%sub2[0].avg_citations) + " citations on average", str('%.1f'%sub2[1].avg_citations) + " citations on average", 
-    	str('%.1f'%sub2[2].avg_citations) + " citations on average"],
+    text=['%.1f'%sub2[0].avg_citations + " citations on average", '%.1f'%sub2[1].avg_citations + " citations on average", 
+    	'%.1f'%sub2[2].avg_citations + " citations on average"],
     name='Humanities/Liberal Arts',
     marker=dict(
         color='rgb(237,61,52)'
@@ -569,12 +570,12 @@ def plot_citations_by_year(year_citation_list):
     y=[year_citation_list[0][1], year_citation_list[1][1], year_citation_list[2][1], year_citation_list[3][1], year_citation_list[4][1], 
     year_citation_list[5][1], year_citation_list[6][1], year_citation_list[7][1], year_citation_list[8][1], year_citation_list[9][1], 
     year_citation_list[10][1], year_citation_list[11][1]],
-    text=[str('%.1f'%year_citation_list[0][1]) + " citations on average", str('%.1f'%year_citation_list[1][1]) + " citations on average", 
-    	str('%.1f'%year_citation_list[2][1]) + " citations on average", str('%.1f'%year_citation_list[3][1]) + " citations on average", 
-    	str('%.1f'%year_citation_list[4][1]) + " citations on average", str('%.1f'%year_citation_list[5][1]) + " citations on average", 
-    	str('%.1f'%year_citation_list[6][1]) + " citations on average", str('%.1f'%year_citation_list[7][1]) + " citations on average", 
-    	str('%.1f'%year_citation_list[8][1]) + " citations on average", str('%.1f'%year_citation_list[9][1]) + " citations on average", 
-    	str('%.1f'%year_citation_list[10][1]) + " citations on average", str('%.1f'%year_citation_list[11][1]) + " citations on average" ],
+    text=['%.1f'%year_citation_list[0][1] + " citations on average", '%.1f'%year_citation_list[1][1] + " citations on average", 
+    	'%.1f'%year_citation_list[2][1] + " citations on average", '%.1f'%year_citation_list[3][1] + " citations on average", 
+    	'%.1f'%year_citation_list[4][1] + " citations on average", '%.1f'%year_citation_list[5][1] + " citations on average", 
+    	'%.1f'%year_citation_list[6][1] + " citations on average", '%.1f'%year_citation_list[7][1] + " citations on average", 
+    	'%.1f'%year_citation_list[8][1] + " citations on average", '%.1f'%year_citation_list[9][1] + " citations on average", 
+    	'%.1f'%year_citation_list[10][1] + " citations on average", '%.1f'%year_citation_list[11][1] + " citations on average" ],
     marker=dict(
         color='rgb(17,70,155)',
         line=dict(
@@ -611,7 +612,6 @@ def plot_citations_by_year(year_citation_list):
 
 # print('Populating database articles.db...')
 # populate_db(DB_NAME)
-
 
 
 ### Make it interactive ###
@@ -662,9 +662,9 @@ if __name__=="__main__":
 					print(each)
 
 			else:
-				print("I'm sorry, I don't recognize that command. Please try another, or enter 'help' for options. ")
+				print("I'm sorry, I don't recognize that command. Please try another, or enter 'help' for options.")
 
-	choose_display_options()
+	#choose_display_options()
 
 
 
