@@ -1,4 +1,4 @@
-# You must create at least 3 test cases and use at least 15 assertions or calls to ‘fail( )’
+# You must create at least 3 test cases and use at least 15 assertions or calls to ‘fail()’
 import unittest
 from final_project import *
 
