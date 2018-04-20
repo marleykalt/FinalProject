@@ -5,6 +5,7 @@ This project compares article-level metrics for scholarly publications, using Pl
 There are three sections to this document: Data Sources, Code Structure and User Guide.
 
 
+
 DATA SOURCES
 
 This program gathers data from three sources: Springer Meta API, PLOS Search API and Semantic Scholar API.
@@ -28,12 +29,17 @@ plos_key = “<your api key here>”
 To run this program, users should install all of the modules listed in the requirements.txt file. In addition, Plotly requires users to have an account and an API key. More information on how to use Plotly can be found here: https://plot.ly/python/getting-started/ .
 
 
+
 CODE STRUCTURE
 
 I have written the program to:
+
 	1. Define functions that make calls to each of the APIs and define classes
+
 	2. Invoke those functions and store the data in a database
+
 	3. Query the database to support four different data comparisons (includes creating lists and class instances)
+
 	4. Plot the data using Plotly. Presentation options can be chosen through user input in the command line (further explained 
 	below)
 
@@ -46,7 +52,9 @@ The functions ‘create_subject_insts’ (lines 350-373) and ‘create_article_i
 There is also a large dictionary that helps organize data, assigned to the global variable ARTICLE_DICT. This dictionary is created from invoking the ‘process_api_data’ function for each subject term. It contains all of the relevant data returned from the three APIs and is used to populate the database.
 
 
+
 USER GUIDE
+
 The program should be run in the user’s command line. There is an optional command line argument, ‘—-rebuild’, that allows users to fetch new data (or will use cached data, if available) and rebuild the database.
 
 After the database is rebuilt, or if this optional argument is not used, the program will prompt the user for input. There are seven input strings that the program will recognize. Four of them (‘access’, ‘influence’, ‘subject’, ‘year’) will create Plotly graphs showing different data comparisons. One input (‘list’) will print to the console the string representation of 25 randomized Article class instances. The full explanations of each possible input string are as follows:
