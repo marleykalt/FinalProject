@@ -328,6 +328,22 @@ def get_influence_by_access(dbname):
 	conn.close()
 	return results
 
+# function to query the database to get average number of citations, grouped by publication date
+# input: database name
+# return: list of tuples
+def get_citations_by_year(dbname):
+	conn = sqlite3.connect(dbname)
+	cur = conn.cursor()
+
+	statement = """SELECT PubDate, AVG(CitationCount)
+					FROM Articles 
+					WHERE CitationCount IS NOT 'Unknown'
+					GROUP BY PubDate """
+	results = cur.execute(statement).fetchall()
+	conn.commit()
+	conn.close()
+	return results
+
 # function to query the database and create instances of the Subject class
 # input: name of database
 # return: a list of Subject class instances
@@ -355,23 +371,6 @@ def create_subject_insts(dbname):
 	conn.commit()
 	conn.close()
 	return avg_cite_by_sub
-
-
-# function to query the database to get average number of citations, grouped by publication date
-# input: database name
-# return: list of tuples
-def get_citations_by_year(dbname):
-	conn = sqlite3.connect(dbname)
-	cur = conn.cursor()
-
-	statement = """SELECT PubDate, AVG(CitationCount)
-					FROM Articles 
-					WHERE CitationCount IS NOT 'Unknown'
-					GROUP BY PubDate """
-	results = cur.execute(statement).fetchall()
-	conn.commit()
-	conn.close()
-	return results
 
 
 # function to query the database and create instances of the Article class
