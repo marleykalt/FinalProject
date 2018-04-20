@@ -21,6 +21,7 @@ This API is used to obtain citation data about a specific article, using the art
 To incorporate these keys into the program, users should create a file in the same directory, named ‘secrets.py’. This file only needs two lines of code, to assign the value of each API key to a variable (‘springer_key’ and ‘plos_key’). It should look like this, with your own API key inserted between the quotation marks:
 
 springer_key = “<your api key here>”
+
 plos_key = “<your api key here>”
 
 
@@ -28,6 +29,7 @@ To run this program, users should install all of the modules listed in the requi
 
 
 CODE STRUCTURE
+
 I have written the program to:
 	1. Define functions that make calls to each of the APIs and define classes
 	2. Invoke those functions and store the data in a database
